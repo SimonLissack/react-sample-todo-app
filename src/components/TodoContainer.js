@@ -1,5 +1,5 @@
 import React from "react"
-import {v4 as uuidv4} from "uuid"
+import axios from 'axios'
 
 import InputTodo from "./InputTodo";
 import Header from './Header'
@@ -7,23 +7,7 @@ import TodosList from "./TodosList"
 
 class TodoContainer extends React.Component {
     state = {
-        todos: [
-            {
-                id: uuidv4(),
-                title: "Setup development environment",
-                completed: true
-            },
-            {
-                id: uuidv4(),
-                title: "Develop website and add content",
-                completed: false
-            },
-            {
-                id: uuidv4(),
-                title: "Deploy to live server",
-                completed: false
-            }
-        ]
+        todos: []
     }
 
     handleChange = id => {
@@ -38,22 +22,29 @@ class TodoContainer extends React.Component {
     }
 
     deleteTodo = id => {
-        this.setState({
-            todos: [
-                ...this.state.todos.filter(todo => todo.id !== id)
-            ]
-        });
+        axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`)
+            .then(() => this.setState({
+                todos: [
+                    ...this.state.todos.filter(todo => todo.id !== id)
+                ]
+            }));
     }
 
-    addTodoItem = title => {
-        const newTodo = {
-            id: uuidv4(),
+    requestAddTodoItem = title => {
+        axios.post("https://jsonplaceholder.typicode.com/todos", {
             title: title,
             completed: false
-        }
-        this.setState({
-            todos:[...this.state.todos, newTodo]
-        })
+        }).then(response => this.setState({
+            todos: [...this.state.todos, response.data]
+        }));
+    }
+
+    componentDidMount() {
+        axios.get("https://jsonplaceholder.typicode.com/todos", {
+            params: {
+                _limit: 10
+            }
+        }).then(response => this.setState({ todos: response.data }));
     }
 
     render() {
@@ -61,7 +52,7 @@ class TodoContainer extends React.Component {
             <div className="container">
                 <Header />
                 <InputTodo
-                    addTodoProps={this.addTodoItem}
+                    addTodoProps={this.requestAddTodoItem}
                 />
                 <TodosList
                     todos={this.state.todos}
