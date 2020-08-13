@@ -1,69 +1,66 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import axios from 'axios'
 
 import InputTodo from "./InputTodo";
 import Header from './Header'
 import TodosList from "./TodosList"
 
-class TodoContainer extends React.Component {
-    state = {
-        todos: [],
-        show: false
-    }
+const TodoContainer = props => {
+    const [todos, setTodos] = useState([]);
+    const [show, setShow] = useState(false);
 
-    handleChange = id => {
-        this.setState({
-            todos: this.state.todos.map(todo => {
+    const handleChange = id => {
+        setTodos(
+            todos.map(todo => {
                 if (todo.id === id) {
                     todo.completed = !todo.completed;
                 }
                 return todo;
-            }),
-            show: !this.state.show
-        });
+            })
+        );
+
+        setShow(!show);
     }
 
-    deleteTodo = id => {
+    const deleteTodo = id => {
         axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`)
-            .then(() => this.setState({
-                todos: [
-                    ...this.state.todos.filter(todo => todo.id !== id)
-                ]
-            }));
+            .then(() => setTodos([
+                ...todos.filter(todo => todo.id !== id)
+            ]));
     }
 
-    requestAddTodoItem = title => {
+    const requestAddTodoItem = title => {
         axios.post("https://jsonplaceholder.typicode.com/todos", {
             title: title,
             completed: false
-        }).then(response => this.setState({
-            todos: [...this.state.todos, response.data]
-        }));
+        }).then(response => setTodos(
+            [...todos, response.data]
+        ));
     }
 
-    componentDidMount() {
+
+    useEffect(() => {
+        console.log("useEffect");
         axios.get("https://jsonplaceholder.typicode.com/todos", {
             params: {
                 _limit: 10
             }
-        }).then(response => this.setState({ todos: response.data }));
-    }
+        }).then(response => setTodos(response.data));
+    }, []);
 
-    render() {
-        return (
-            <div className="container">
-                <Header headerSpan={this.state.show} />
-                <InputTodo
-                    addTodoProps={this.requestAddTodoItem}
-                />
-                <TodosList
-                    todos={this.state.todos}
-                    handleChangeProps={this.handleChange}
-                    deleteTodoProps={this.deleteTodo}
-                />
-            </div>
-        )
-    }
+    return (
+        <div className="container">
+            <Header headerSpan={show} />
+            <InputTodo
+                addTodoProps={requestAddTodoItem}
+            />
+            <TodosList
+                todos={todos}
+                handleChangeProps={handleChange}
+                deleteTodoProps={deleteTodo}
+            />
+        </div>
+    )
 }
 
 export default TodoContainer
